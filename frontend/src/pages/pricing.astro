@@ -1,0 +1,66 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Container from "@/components/container.astro";
+import Sectionhead from "@/components/sectionhead.astro";
+import PricingCard from "@/components/pricing.astro";
+
+const pricing = [
+  {
+    name: "Económico",
+    price: {
+      oneWay: "$99",
+      roundTrip: "$179",
+    },
+    popular: false,
+    features: [
+      "Equipaje de mano incluido",
+      "1 artículo personal",
+      "Selección de asiento estándar",
+      "Atención al cliente básica",
+    ],
+  },
+  {
+    name: "Ejecutivo",
+    price: {
+      oneWay: "$249",
+      roundTrip: "$449",
+    },
+    popular: true,
+    features: [
+      "Equipaje facturado gratuito",
+      "Acceso a salas VIP",
+      "Asientos premium",
+      "Embarque prioritario",
+      "Atención al cliente prioritaria",
+    ],
+  },
+  {
+    name: "Primera Clase",
+    price: "Personalizado",
+    popular: false,
+    features: [
+      "Suite privada a bordo",
+      "Chef exclusivo",
+      "Atención VIP 24/7",
+      "Acceso ilimitado a salas VIP",
+      "Traslado privado al aeropuerto",
+    ],
+  },
+];
+---
+
+<Layout title="Tarifas">
+  <Container>
+    <Sectionhead>
+      <Fragment slot="title">Tarifas</Fragment>
+      <Fragment slot="desc">
+        Elige la mejor opción para tu viaje.
+      </Fragment>
+    </Sectionhead>
+
+    <div
+      class="grid md:grid-cols-3 gap-10 mx-auto max-w-(--breakpoint-lg) mt-12">
+      {pricing.map((item) => <PricingCard plan={item} />)}
+    </div>
+  </Container>
+</Layout>
