@@ -1,0 +1,64 @@
+---
+const tripType = ["Ida y vuelta", "Solo ida", "Multidestino"];
+---
+
+<div class="bg-[#C0C0C0] p-6 rounded-lg shadow-lg text-white">
+  <!-- Botones de tipo de viaje -->
+  <div class="flex gap-4 mb-4">
+    {tripType.map((type, index) => (
+      <button
+        class={`px-4 py-2 rounded-full font-semibold ${
+          index === 0 ? "bg-white text-[#2A0A60]" : "border border-white"
+        }`}
+      >
+        {type}
+      </button>
+    ))}
+  </div>
+
+  <!-- Campos de búsqueda -->
+  <div class="grid grid-cols-4 gap-4 bg-white p-4 rounded-lg text-black">
+    <!-- Origen -->
+    <div class="flex flex-col">
+      <label class="text-gray-600 font-medium">Origen</label>
+      <input
+        type="text"
+        placeholder="Bogotá, Colombia"
+        class="border rounded p-2"
+      />
+    </div>
+    
+    <!-- Destino -->
+    <div class="flex flex-col">
+      <label class="text-gray-600 font-medium">Destino</label>
+      <input
+        type="text"
+        placeholder="Ingresa un destino"
+        class="border rounded p-2"
+      />
+    </div>
+    
+    <!-- Fechas -->
+    <div class="flex flex-col">
+      <label class="text-gray-600 font-medium">Fechas</label>
+      <input type="date" class="border rounded p-2" />
+    </div>
+    
+    <!-- Pasajeros -->
+    <div class="flex flex-col">
+      <label class="text-gray-600 font-medium">Pasajeros</label>
+      <select class="border rounded p-2">
+        <option>1 persona, Económica</option>
+        <option>2 personas, Económica</option>
+        <option>1 persona, Ejecutiva</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Botón de búsqueda -->
+  <div class="mt-4 text-right">
+    <button class="bg-black text-white px-6 py-3 rounded-lg font-bold">
+        Buscar
+    </button>
+  </div>
+</div>

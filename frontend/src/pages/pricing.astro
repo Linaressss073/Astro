@@ -6,7 +6,7 @@ import PricingCard from "@/components/pricing.astro";
 
 const pricing = [
   {
-    name: "Económico",
+    name: "Basica",
     price: {
       oneWay: "$99",
       roundTrip: "$179",
@@ -20,7 +20,7 @@ const pricing = [
     ],
   },
   {
-    name: "Ejecutivo",
+    name: "Classic",
     price: {
       oneWay: "$249",
       roundTrip: "$449",
@@ -35,7 +35,20 @@ const pricing = [
     ],
   },
   {
-    name: "Primera Clase",
+    name: "Flex",
+    price: "Personalizado",
+    popular: false,
+    features: [
+      "Suite privada a bordo",
+      "Chef exclusivo",
+      "Atención VIP 24/7",
+      "Acceso ilimitado a salas VIP",
+      "Traslado privado al aeropuerto",
+    ],
+  },
+
+  {
+    name: "Business",
     price: "Personalizado",
     popular: false,
     features: [
@@ -48,6 +61,7 @@ const pricing = [
   },
 ];
 ---
+
 
 <Layout title="Tarifas">
   <Container>
