@@ -1,64 +1,171 @@
----
-const tripType = ["Ida y vuelta", "Solo ida", "Multidestino"];
----
-
 <div class="bg-[#C0C0C0] p-6 rounded-lg shadow-lg text-white">
   <!-- Botones de tipo de viaje -->
   <div class="flex gap-4 mb-4">
-    {tripType.map((type, index) => (
-      <button
-        class={`px-4 py-2 rounded-full font-semibold ${
-          index === 0 ? "bg-white text-[#2A0A60]" : "border border-white"
-        }`}
-      >
-        {type}
-      </button>
-    ))}
+    <button id="idaVuelta" class="trip-btn active">Ida y vuelta</button>
+    <button id="soloIda" class="trip-btn">Solo ida</button>
+    <button id="multiDestino" class="trip-btn">Multidestino</button>
   </div>
 
   <!-- Campos de búsqueda -->
-  <div class="grid grid-cols-4 gap-4 bg-white p-4 rounded-lg text-black">
+  <form id="vueloForm" class="grid grid-cols-4 gap-4 bg-white p-4 rounded-lg text-black">
     <!-- Origen -->
-    <div class="flex flex-col">
+    <div class="flex flex-col relative">
       <label class="text-gray-600 font-medium">Origen</label>
-      <input
-        type="text"
-        placeholder="Bogotá, Colombia"
-        class="border rounded p-2"
-      />
+      <input id="origen" type="text" placeholder="Bogotá, Colombia" class="border rounded p-2" required />
+      <ul id="sugerenciasOrigen" class="absolute bg-white w-full border rounded shadow-lg hidden"></ul>
     </div>
     
     <!-- Destino -->
-    <div class="flex flex-col">
+    <div class="flex flex-col relative">
       <label class="text-gray-600 font-medium">Destino</label>
-      <input
-        type="text"
-        placeholder="Ingresa un destino"
-        class="border rounded p-2"
-      />
+      <input id="destino" type="text" placeholder="Ingresa un destino" class="border rounded p-2" required />
+      <ul id="sugerenciasDestino" class="absolute bg-white w-full border rounded shadow-lg hidden"></ul>
     </div>
     
     <!-- Fechas -->
     <div class="flex flex-col">
-      <label class="text-gray-600 font-medium">Fechas</label>
-      <input type="date" class="border rounded p-2" />
+      <label class="text-gray-600 font-medium">Fecha de salida</label>
+      <input id="fechaSalida" type="date" class="border rounded p-2" required />
     </div>
-    
+
+    <div class="flex flex-col" id="fechaRegresoContainer">
+      <label class="text-gray-600 font-medium">Fecha de regreso</label>
+      <input id="fechaRegreso" type="date" class="border rounded p-2" />
+    </div>
+
     <!-- Pasajeros -->
     <div class="flex flex-col">
       <label class="text-gray-600 font-medium">Pasajeros</label>
-      <select class="border rounded p-2">
-        <option>1 persona, Económica</option>
-        <option>2 personas, Económica</option>
-        <option>1 persona, Ejecutiva</option>
+      <select id="pasajeros" class="border rounded p-2">
+        <option value="1">1 persona, Económica</option>
+        <option value="2">2 personas, Económica</option>
+        <option value="3">1 persona, Ejecutiva</option>
       </select>
     </div>
-  </div>
+  </form>
 
   <!-- Botón de búsqueda -->
   <div class="mt-4 text-right">
-    <button class="bg-black text-white px-6 py-3 rounded-lg font-bold">
+    <button id="buscarVuelo" class="bg-black text-white px-6 py-3 rounded-lg font-bold">
         Buscar
     </button>
   </div>
+
+  <!-- Mensaje de respuesta -->
+  <p id="mensaje" class="mt-2 text-center text-red-500"></p>
 </div>
+
+<script>
+  const tripButtons = document.querySelectorAll(".trip-btn");
+  const fechaRegresoContainer = document.getElementById("fechaRegresoContainer");
+  const origenInput = document.getElementById("origen");
+  const destinoInput = document.getElementById("destino");
+  const sugerenciasOrigen = document.getElementById("sugerenciasOrigen");
+  const sugerenciasDestino = document.getElementById("sugerenciasDestino");
+  const mensaje = document.getElementById("mensaje");
+
+  // 🔹 Cambio de botón activo y mostrar fecha de regreso
+  tripButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tripButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      fechaRegresoContainer.style.display = btn.id === "idaVuelta" ? "block" : "none";
+    });
+  });
+
+  // 🔹 Simulación de autocompletado
+  const ciudades = ["Bogotá, Colombia", "Medellín, Colombia", "Cartagena, Colombia", "Buenos Aires, Argentina", "Madrid, España", "Ciudad de México, México"];
+
+  function mostrarSugerencias(input, lista, sugerencias) {
+    lista.innerHTML = "";
+    const filtro = sugerencias.filter(c => c.toLowerCase().includes(input.value.toLowerCase()));
+    if (filtro.length) {
+      lista.classList.remove("hidden");
+      filtro.forEach(ciudad => {
+        const item = document.createElement("li");
+        item.textContent = ciudad;
+        item.classList.add("cursor-pointer", "p-2", "hover:bg-gray-200");
+        item.addEventListener("click", () => {
+          input.value = ciudad;
+          lista.classList.add("hidden");
+        });
+        lista.appendChild(item);
+      });
+    } else {
+      lista.classList.add("hidden");
+    }
+  }
+
+  origenInput.addEventListener("input", () => mostrarSugerencias(origenInput, sugerenciasOrigen, ciudades));
+  destinoInput.addEventListener("input", () => mostrarSugerencias(destinoInput, sugerenciasDestino, ciudades));
+
+  document.addEventListener("click", (e) => {
+    if (!origenInput.contains(e.target) && !sugerenciasOrigen.contains(e.target)) sugerenciasOrigen.classList.add("hidden");
+    if (!destinoInput.contains(e.target) && !sugerenciasDestino.contains(e.target)) sugerenciasDestino.classList.add("hidden");
+  });
+
+  // 🔹 Evento para enviar formulario
+  document.getElementById("buscarVuelo").addEventListener("click", async (e) => {
+    e.preventDefault();
+    mensaje.textContent = "";
+
+    const origen = origenInput.value;
+    const destino = destinoInput.value;
+    const fechaSalida = document.getElementById("fechaSalida").value;
+    const fechaRegreso = document.getElementById("fechaRegreso").value;
+    const pasajeros = document.getElementById("pasajeros").value;
+
+    // ⚠️ Validaciones
+    if (!origen || !destino || !fechaSalida || pasajeros < 1) {
+      mensaje.textContent = "⚠️ Todos los campos son obligatorios.";
+      return;
+    }
+
+    if (origen === destino) {
+      mensaje.textContent = "⚠️ El origen y el destino no pueden ser iguales.";
+      return;
+    }
+
+    if (fechaRegreso && new Date(fechaRegreso) < new Date(fechaSalida)) {
+      mensaje.textContent = "⚠️ La fecha de regreso no puede ser anterior a la de salida.";
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:3001/api/buscar-vuelo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ origen, destino, fechaSalida, fechaRegreso, pasajeros }),
+      });
+
+      const data = await res.json();
+      console.log("📩 Datos recibidos:", data);
+      mensaje.textContent = data.mensaje;
+      mensaje.classList.remove("text-red-500");
+      mensaje.classList.add("text-green-500");
+    } catch (error) {
+      console.error("❌ Error al conectar con el servidor", error);
+      mensaje.textContent = "❌ Error al conectar con el servidor";
+      mensaje.classList.remove("text-green-500");
+      mensaje.classList.add("text-red-500");
+    }
+  });
+</script>
+
+<style>
+  .trip-btn {
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    border: 2px solid white;
+    background-color: transparent;
+    color: white;
+    cursor: pointer;
+  }
+  
+  .trip-btn.active {
+    background-color: white;
+    color: #2A0A60;
+  }
+</style>

@@ -1,0 +1,56 @@
+---
+import Container from "@/components/container.astro";
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout>
+  <Container>
+    <section class="max-w-md mx-auto mt-8 p-6 border rounded-lg shadow-lg">
+      <h2 class="text-2xl font-bold mb-4 text-center">Iniciar Sesión</h2>
+      <form id="loginForm">
+        <input id="login_usuario" type="text" placeholder="Usuario" required class="w-full p-2 border rounded mb-2" />
+        <input id="login_password" type="password" placeholder="Contraseña" required class="w-full p-2 border rounded mb-2" />
+        <button type="submit" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">
+          Iniciar sesión
+        </button>
+      </form>
+      <p id="login_mensaje" class="mt-2 text-red-500 text-center"></p>
+    </section>
+  </Container>
+</Layout>
+
+<script>
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const usuario = document.getElementById("login_usuario").value;
+    const password = document.getElementById("login_password").value;
+    const mensaje = document.getElementById("login_mensaje");
+
+    try {
+      const res = await fetch("http://localhost:3001/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario, password }),
+      });
+
+      const data = await res.json();
+      mensaje.textContent = data.mensaje;
+
+      if (res.ok) {
+        mensaje.classList.remove("text-red-500");
+        mensaje.classList.add("text-green-500");
+
+        // Almacenar el token JWT
+        localStorage.setItem("token", data.token);
+
+        // Redirigir al usuario al dashboard u otra página
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 1000);
+      }
+    } catch (error) {
+      console.error("❌ Error en la autenticación:", error);
+      mensaje.textContent = "Error en el servidor.";
+    }
+  });
+</script>

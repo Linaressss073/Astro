@@ -1,0 +1,86 @@
+---
+import Container from "@/components/container.astro";
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout>
+  <Container>
+    <section class="max-w-md mx-auto mt-8 p-6 border rounded-lg shadow-lg">
+      <h2 class="text-2xl font-bold mb-4 text-center">Registrarse</h2>
+      <form id="registerForm">
+        <input id="register_nombre" type="text" placeholder="Nombre" required class="w-full p-2 border rounded mb-2" />
+        <input id="register_apellido" type="text" placeholder="Apellido" required class="w-full p-2 border rounded mb-2" />
+
+        <div class="flex mb-2">
+          <select id="register_extension" required class="p-2 border rounded-l">
+            <option value="+57">🇨🇴 +57 (Colombia)</option>
+            <option value="+1">🇺🇸 +1 (USA)</option>
+            <option value="+34">🇪🇸 +34 (España)</option>
+            <option value="+52">🇲🇽 +52 (México)</option>
+            <option value="+54">🇦🇷 +54 (Argentina)</option>
+            <option value="+55">🇧🇷 +55 (Brasil)</option>
+          </select>
+          <input id="register_celular" type="text" placeholder="Número celular" required class="w-full p-2 border rounded-r" />
+        </div>
+
+        <input id="register_correo" type="email" placeholder="Correo" required class="w-full p-2 border rounded mb-2" />
+        <input id="register_password" type="password" placeholder="Contraseña" required class="w-full p-2 border rounded mb-2" />
+
+        <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+          Registrarse
+        </button>
+      </form>
+      <p id="register_mensaje" class="mt-2 text-red-500 text-center"></p>
+    </section>
+  </Container>
+</Layout>
+
+<script>
+  document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const nombre = document.getElementById("register_nombre").value;
+    const apellido = document.getElementById("register_apellido").value;
+    const extension = document.getElementById("register_extension").value;
+    const celular = document.getElementById("register_celular").value;
+    const correo = document.getElementById("register_correo").value;
+    const password = document.getElementById("register_password").value;
+    const mensaje = document.getElementById("register_mensaje");
+
+    // 📌 Validación de campos vacíos
+    if (!nombre || !apellido || !celular || !correo || !password) {
+      mensaje.textContent = "⚠️ Todos los campos son obligatorios.";
+      return;
+    }
+
+    // 📌 Unir extensión y número de celular
+    const celularCompleto = `${extension}${celular}`;
+
+    try {
+      const res = await fetch("http://localhost:3001/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre, apellido, celular: celularCompleto, correo, password }),
+      });
+
+      const data = await res.json();
+      mensaje.textContent = data.mensaje;
+
+      if (res.ok) {
+        mensaje.classList.remove("text-red-500");
+        mensaje.classList.add("text-green-500");
+
+        // Guardar el token en localStorage
+        localStorage.setItem("token", data.token);
+
+        // Redirigir al usuario a su dashboard
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1000);
+      }
+    } catch (error) {
+      console.error("❌ Error en el registro:", error);
+      mensaje.textContent = "❌ Error en el servidor.";
+    }
+  });
+</script>
