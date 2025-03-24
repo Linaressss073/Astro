@@ -6,94 +6,99 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import colors from "colors";
 
+// ✅ Configuración
 dotenv.config();
-
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("✅ Conectado a MongoDB"))
-  .catch(err => console.error("❌ Error en MongoDB:", err));
+// ✅ Conectar a MongoDB
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => console.log(colors.green("✅ Conectado a MongoDB")))
+  .catch(err => console.error(colors.red("❌ Error en MongoDB:"), err));
 
-// 📌 Esquema de Usuario
+// ✅ Esquemas y Modelos
 const usuarioSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
-  apellido: { type: String, required: true },
-  celular: { type: String, required: true, unique: true },
-  extension: { type: String, required: false }, // Nueva extensión opcional
   correo: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 });
 
+const reservaSchema = new mongoose.Schema({
+  origen: { type: String, required: true },
+  destino: { type: String, required: true },
+  fechaSalida: { type: Date, required: true },
+  fechaRegreso: { type: Date, required: true },
+  costo: { type: Number, required: true },
+  usuarioId: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" },
+  creadaEn: { type: Date, default: Date.now },
+});
+
 const Usuario = mongoose.model("Usuario", usuarioSchema);
+const Reserva = mongoose.model("Reserva", reservaSchema);
 
-// 📌 Registro de Usuario
-app.post("/api/register", async (req, res) => {
-  const { nombre, apellido, celular, extension, correo, password } = req.body;
-
-  // 📌 Validación de campos obligatorios
-  if (!nombre || !apellido || !celular || !correo || !password) {
-    return res.status(400).json({ mensaje: "⚠️ Todos los campos son obligatorios." });
-  }
+// ✅ Middleware: Verificar Token
+const verificarToken = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ mensaje: "⚠️ No autorizado" });
 
   try {
-    // 📌 Verificar si el usuario ya existe por correo o celular
-    const usuarioExistente = await Usuario.findOne({ $or: [{ correo }, { celular }] });
-    if (usuarioExistente) {
-      return res.status(400).json({ mensaje: "⚠️ Usuario ya registrado con este correo o celular." });
-    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.usuario = decoded.usuarioId;
+    next();
+  } catch {
+    return res.status(403).json({ mensaje: "❌ Token inválido" });
+  }
+};
 
-    // 📌 Agregar extensión al número de celular
-    const celularConExtension = extension ? `${extension}-${celular}` : celular;
-
-    // 📌 Hash de la contraseña
+// ✅ Registro de Usuario
+app.post("/api/register", async (req, res) => {
+  try {
+    const { nombre, correo, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 📌 Crear nuevo usuario
-    const nuevoUsuario = new Usuario({
-      nombre,
-      apellido,
-      celular: celularConExtension,
-      extension,
-      correo,
-      password: hashedPassword,
-    });
-
+    const nuevoUsuario = new Usuario({ nombre, correo, password: hashedPassword });
     await nuevoUsuario.save();
 
-    // 📌 Generar token JWT
-    const token = jwt.sign({ usuario: nuevoUsuario.correo }, process.env.JWT_SECRET, { expiresIn: "1h" });
-
-    res.json({ mensaje: "✅ Registro exitoso", token });
+    res.status(201).json({ mensaje: "✅ Usuario registrado con éxito." });
   } catch (error) {
-    console.error("❌ Error en el registro:", error);
-    res.status(500).json({ mensaje: "❌ Error en el servidor" });
+    res.status(500).json({ mensaje: "❌ Error al registrar usuario." });
   }
 });
 
-// 📌 Inicio de Sesión
+// ✅ Inicio de Sesión
 app.post("/api/login", async (req, res) => {
-  const { correo, password } = req.body;
-
   try {
-    const usuarioDB = await Usuario.findOne({ correo });
-    if (!usuarioDB) return res.status(400).json({ mensaje: "⚠️ Usuario o contraseña incorrectos" });
+    const { correo, password } = req.body;
+    const usuario = await Usuario.findOne({ correo });
+    if (!usuario || !await bcrypt.compare(password, usuario.password)) {
+      return res.status(401).json({ mensaje: "⚠️ Credenciales inválidas." });
+    }
 
-    const esValido = await bcrypt.compare(password, usuarioDB.password);
-    if (!esValido) return res.status(400).json({ mensaje: "⚠️ Usuario o contraseña incorrectos" });
-
-    const token = jwt.sign({ usuario: usuarioDB.correo }, process.env.JWT_SECRET, { expiresIn: "1h" });
-
+    const token = jwt.sign({ usuarioId: usuario._id }, process.env.JWT_SECRET, { expiresIn: "2h" });
     res.json({ mensaje: "✅ Inicio de sesión exitoso", token });
   } catch (error) {
-    console.error("❌ Error en el inicio de sesión:", error);
-    res.status(500).json({ mensaje: "❌ Error en el servidor" });
+    res.status(500).json({ mensaje: "❌ Error en el servidor." });
   }
 });
 
-// 📌 Servidor
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(colors.cyan(`🚀 Servidor corriendo en http://localhost:${PORT}`));
+// ✅ Crear una Reserva (Autenticado)
+app.post("/api/reservas", verificarToken, async (req, res) => {
+  try {
+    const { origen, destino, fechaSalida, fechaRegreso, costo } = req.body;
+
+    const nuevaReserva = new Reserva({
+      origen, destino, fechaSalida, fechaRegreso, costo, usuarioId: req.usuario
+    });
+
+    await nuevaReserva.save();
+    res.status(201).json({ mensaje: "✅ Reserva creada con éxito.", reserva: nuevaReserva });
+  } catch (error) {
+    res.status(500).json({ mensaje: "❌ Error al crear la reserva." });
+  }
 });
+
+// ✅ Iniciar servidor
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(colors.cyan(`🚀 Servidor en http://localhost:${PORT}`)));

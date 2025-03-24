@@ -1,0 +1,62 @@
+---
+import Container from "@/components/container.astro";
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout>
+  <Container>
+    <section class="max-w-md mx-auto mt-8 p-6 border rounded-lg shadow-lg">
+      <h2 class="text-2xl font-bold mb-4 text-center">Pago</h2>
+      <form id="paymentForm">
+        <input id="card_name" type="text" placeholder="Nombre del titular" required class="w-full p-2 border rounded mb-2" />
+        <input id="card_number" type="text" placeholder="Número de tarjeta" required class="w-full p-2 border rounded mb-2" />
+
+        <div class="flex mb-2">
+          <input id="card_expiry" type="text" placeholder="MM/YY" required class="p-2 border rounded-l w-1/2" />
+          <input id="card_cvv" type="text" placeholder="CVV" required class="p-2 border rounded-r w-1/2" />
+        </div>
+
+        <input id="payment_amount" type="number" placeholder="Monto (USD)" required class="w-full p-2 border rounded mb-2" />
+
+        <button type="submit" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">
+          Pagar
+        </button>
+      </form>
+      <p id="payment_message" class="mt-2 text-red-500 text-center"></p>
+    </section>
+  </Container>
+</Layout>
+
+<script>
+  document.getElementById("paymentForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("card_name").value;
+    const number = document.getElementById("card_number").value;
+    const expiry = document.getElementById("card_expiry").value;
+    const cvv = document.getElementById("card_cvv").value;
+    const amount = document.getElementById("payment_amount").value;
+    const message = document.getElementById("payment_message");
+
+    if (!name || !number || !expiry || !cvv || !amount) {
+      message.textContent = "⚠️ Todos los campos son obligatorios.";
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:3001/api/payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, number, expiry, cvv, amount }),
+      });
+
+      const data = await res.json();
+      message.textContent = data.message;
+      message.classList.toggle("text-green-500", res.ok);
+      message.classList.toggle("text-red-500", !res.ok);
+    } catch (error) {
+      console.error("❌ Error en el pago:", error);
+      message.textContent = "❌ Error en el servidor.";
+    }
+  });
+</script>
