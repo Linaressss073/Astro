@@ -1,16 +1,11 @@
-import { defineConfig } from "astro/config";
-import tailwindcss from "@tailwindcss/vite";
-import mdx from "@astrojs/mdx";
-import sitemap from "@astrojs/sitemap";
-import icon from "astro-icon";
+import { defineConfig } from 'astro/config';
+import vercel from '@astrojs/vercel';
+import tailwind from '@astrojs/tailwind';
+import mdx from '@astrojs/mdx';
 
-// https://astro.build/config
 export default defineConfig({
-  output: "server",
-  site: "https://astroship.web3templates.com",
-  integrations: [mdx(), sitemap(), icon()],
-  vite: {
-    plugins: [tailwindcss()],
-  },
-  adapter:vercel(),
+  output: 'server',
+  adapter: vercel(),
+  integrations: [tailwind(), mdx()]
 });
+// Compare this snippet from frontend/vercel.json:
