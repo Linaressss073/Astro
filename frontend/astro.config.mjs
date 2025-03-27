@@ -6,9 +6,11 @@ import icon from "astro-icon";
 
 // https://astro.build/config
 export default defineConfig({
+  output: "server",
   site: "https://astroship.web3templates.com",
   integrations: [mdx(), sitemap(), icon()],
   vite: {
     plugins: [tailwindcss()],
   },
+  adapter:vercel(),
 });
