@@ -1,88 +1,201 @@
 ---
-const { search } = Astro.url;
-const params = new URLSearchParams(search);
+import Vuelo from "../components/vuelos.astro";
+const { searchParams } = Astro.url;
 
-const reservaId = params.get("reservaId");
-
-const procesarPago = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    alert("⚠️ Debes iniciar sesión.");
-    window.location.href = "/login";
-    return;
-  }
-
-  try {
-    const response = await fetch("http://localhost:3001/api/payment", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        reservaId,
-        name: "Cliente Ejemplo",
-        number: "4111111111111111",
-        expiry: "12/26",
-        cvv: "123",
-        amount: 250,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(`❌ Error en el pago: ${data.message}`);
-      return;
-    }
-
-    alert("✅ ¡Pago exitoso!");
-    window.location.href = "/exito";
-  } catch (error) {
-    alert("❌ Error en el servidor. Intenta más tarde.");
-    console.error("Error en el pago:", error);
-  }
+const vuelo = {
+  origen: searchParams.get("origen"),
+  destino: searchParams.get("destino"),
+  fechaSalida: searchParams.get("fechaSalida"),
+  fechaRegreso: searchParams.get("fechaRegreso"),
+  horaSalida: searchParams.get("horaSalida"),
+  horaRegreso: searchParams.get("horaRegreso"),
+  categoria: searchParams.get("categoria"),
+  costo: searchParams.get("costo"),
 };
 ---
 
-<style>
-  .pago-container {
-    max-width: 600px;
-    margin: 40px auto;
-    padding: 20px;
-    border: 2px solid #2A0A60;
-    border-radius: 16px;
-    background: #FAF9FF;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  h2 {
-    text-align: center;
-    color: #2A0A60;
-    margin-bottom: 24px;
-  }
-
-  .pay-btn {
-    width: 100%;
-    padding: 12px;
-    background: #5A32A3;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 18px;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-
-  .pay-btn:hover {
-    background: #2A0A60;
-  }
-</style>
+<head>
+  <meta charset="UTF-8" />
+  <title>Página de Pago - Reserva de Vuelo</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
 
 <div class="pago-container">
-  <h2>Simular Pago 💳</h2>
+  <h2>💳 Confirmar Pago</h2>
 
-  <p>🧾 Estás a punto de pagar tu reserva.</p>
+  <h3>🧾 Información de Pago</h3>
+  <form id="pagoForm" action="/confirmacion" method="POST">
+    <div class="form-group">
+      <label for="nombre">Nombre:</label>
+      <input id="nombre" name="nombre" type="text" placeholder="Tu nombre" required />
+    </div>
 
-  <button class="pay-btn" onClick={procesarPago}>Pagar Ahora</button>
+    <div class="form-group">
+      <label for="apellido">Apellido:</label>
+      <input id="apellido" name="apellido" type="text" placeholder="Tu apellido" required />
+    </div>
+
+    <div class="form-group">
+      <label for="tarjeta">Número de tarjeta:</label>
+      <input id="tarjeta" name="tarjeta" type="text" placeholder="1234 5678 9012 3456" maxlength="19" required />
+    </div>
+
+    <div class="form-group">
+      <label for="fechaExp">Fecha de expiración (MM/YY):</label>
+      <input id="fechaExp" name="fechaExp" type="text" placeholder="MM/YY" required />
+    </div>
+
+    <div class="form-group">
+      <label for="cvv">CVV:</label>
+      <input id="cvv" name="cvv" type="text" placeholder="123" maxlength="3" required />
+    </div>
+
+    <!-- Datos ocultos del vuelo -->
+    <input type="hidden" name="origen" value={vuelo.origen} />
+    <input type="hidden" name="destino" value={vuelo.destino} />
+    <input type="hidden" name="fechaSalida" value={vuelo.fechaSalida} />
+    <input type="hidden" name="fechaRegreso" value={vuelo.fechaRegreso || ""} />
+    <input type="hidden" name="horaSalida" value={vuelo.horaSalida} />
+    <input type="hidden" name="horaRegreso" value={vuelo.horaRegreso || ""} />
+    <input type="hidden" name="categoria" value={vuelo.categoria} />
+    <input type="hidden" name="costo" value={vuelo.costo} />
+
+    <button type="submit" class="btn-pagar">Pagar Ahora 💳</button>
+  </form>
+
+  <div id="errorMensaje"></div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("pagoForm");
+    const tarjetaInput = document.getElementById("tarjeta");
+    const fechaExpInput = document.getElementById("fechaExp");
+    const errorMensaje = document.getElementById("errorMensaje");
+
+    // Formato de tarjeta de crédito (XXXX XXXX XXXX XXXX)
+    tarjetaInput.addEventListener("input", (e) => {
+      let value = e.target.value.replace(/\D/g, "").slice(0, 16);
+      e.target.value = value.replace(/(\d{4})/g, "$1 ").trim();
+    });
+
+    // Validación de fecha de expiración MM/YY
+    fechaExpInput.addEventListener("input", (e) => {
+      let value = e.target.value.replace(/\D/g, "").slice(0, 4);
+      if (value.length >= 2) value = value.replace(/(\d{2})/, "$1/");
+      e.target.value = value;
+    });
+
+    // Algoritmo de Luhn para validar tarjeta
+    function validarTarjeta(numero) {
+      let arr = numero.replace(/\s/g, "").split("").reverse();
+      return arr.reduce((acc, num, i) => {
+        let n = parseInt(num);
+        if (i % 2 !== 0) n *= 2;
+        if (n > 9) n -= 9;
+        return acc + n;
+      }, 0) % 10 === 0;
+    }
+
+    // Validación al enviar
+    form.addEventListener("submit", (e) => {
+      const tarjeta = tarjetaInput.value.replace(/\s/g, "");
+      const fechaExp = fechaExpInput.value;
+      const [mes, año] = fechaExp.split("/").map(Number);
+      const fechaActual = new Date();
+      const añoActual = fechaActual.getFullYear() % 100;
+      const mesActual = fechaActual.getMonth() + 1;
+
+      if (!validarTarjeta(tarjeta)) {
+        errorMensaje.textContent = "❌ Número de tarjeta inválido.";
+        e.preventDefault();
+      } else if (!mes || !año || mes < 1 || mes > 12 || año < añoActual || (año === añoActual && mes < mesActual)) {
+        errorMensaje.textContent = "❌ Fecha de expiración inválida.";
+        e.preventDefault();
+      }
+    });
+  });
+</script>
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #7D55C7, #5A32A3);
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .pago-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 40px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.8s ease-in-out;
+  }
+  
+  h2, h3 {
+    text-align: center;
+    color: #5A32A3;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #5A32A3;
+  }
+  
+  input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 2px solid #5A32A3;
+    transition: all 0.3s;
+    box-sizing: border-box;
+  }
+  
+  input:focus {
+    outline: none;
+    border-color: #7D55C7;
+    box-shadow: 0 0 10px #7D55C7;
+  }
+  
+  .btn-pagar {
+    background: linear-gradient(135deg, #5A32A3, #7D55C7);
+    color: white;
+    padding: 15px;
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: transform 0.2s;
+  }
+  
+  .btn-pagar:hover {
+    transform: scale(1.05);
+  }
+  
+  #errorMensaje {
+    color: red;
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  </style>

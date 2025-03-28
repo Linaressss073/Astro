@@ -1,0 +1,81 @@
+---
+// Pago.astro
+export interface Props {
+  origen: string;
+  destino: string;
+  fechaSalida: string;
+  horaSalida: string;
+  categoria: string;
+  costo: number;
+}
+---
+
+<head>
+  <title>Pago del Vuelo</title>
+</head>
+
+<h2>💳 Completa tu Pago</h2>
+
+<div class="resumen">
+  <p>🛫 <strong>Origen:</strong> {origen || "Origen no especificado"} ➜ <strong>Destino:</strong> {destino || "Destino no especificado"}</p>
+  <p>📅 <strong>Fecha de salida:</strong> {fechaSalida || "Fecha no especificada"} a las {horaSalida || "Hora no especificada"}</p>
+  <p>💼 <strong>Categoría:</strong> {categoria || "Categoría no especificada"}</p>
+  <p>💰 <strong>Costo:</strong> ${costo || "0.00"} USD</p>
+</div>
+
+<!-- Formulario de Pago -->
+<form id="formPago" class="form-pago">
+  <label for="nombre">👤 Nombre del Titular:</label>
+  <input type="text" id="nombre" name="nombre" required />
+
+  <label for="tarjeta">💳 Número de Tarjeta:</label>
+  <input type="text" id="tarjeta" name="tarjeta" maxlength="16" required />
+
+  <label for="fechaExp">📅 Fecha de Expiración:</label>
+  <input type="text" id="fechaExp" name="fechaExp" placeholder="MM/YY" required />
+
+  <label for="cvv">🔐 CVV:</label>
+  <input type="text" id="cvv" name="cvv" maxlength="3" required />
+
+  <button type="submit" class="btn-pagar">Pagar</button>
+</form>
+
+<script>
+  document.getElementById("formPago").addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const nombre = document.getElementById("nombre").value.trim();
+    const tarjeta = document.getElementById("tarjeta").value.trim();
+    const fechaExp = document.getElementById("fechaExp").value.trim();
+    const cvv = document.getElementById("cvv").value.trim();
+
+    if (!nombre || !tarjeta || !fechaExp || !cvv) {
+      alert("❌ Por favor, completa todos los campos.");
+      return;
+    }
+
+    alert(`✅ Pago exitoso de ${costo} USD para el vuelo ${origen} ➜ ${destino}`);
+    window.location.href = "/confirmacion";
+  });
+</script>
+
+<style>
+  h2 { text-align: center; color: #5A32A3; }
+  .resumen { margin-bottom: 20px; line-height: 1.8; text-align: center; }
+  
+  .form-pago {
+    display: flex; flex-direction: column; gap: 15px;
+    max-width: 400px; margin: 0 auto;
+  }
+
+  input {
+    padding: 10px; border: 2px solid #5A32A3; border-radius: 10px; width: 100%;
+  }
+
+  .btn-pagar {
+    background: linear-gradient(135deg, #5A32A3, #7D55C7);
+    color: white; padding: 14px;
+    border: none; border-radius: 12px;
+    cursor: pointer;
+  }
+</style>

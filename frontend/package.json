@@ -25,6 +25,7 @@
     "astro-navbar": "^2.3.9",
     "astro-seo": "^0.8.4",
     "flatpickr": "^4.6.13",
+    "preact": "^10.26.4",
     "sharp": "^0.33.5",
     "tailwindcss": "^4.0.14"
   }

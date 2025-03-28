@@ -1,0 +1,125 @@
+---
+const { searchParams } = Astro.url;
+
+const nombre = searchParams.get("nombre");
+const apellido = searchParams.get("apellido");
+const origen = searchParams.get("origen");
+const destino = searchParams.get("destino");
+const fechaSalida = searchParams.get("fechaSalida");
+const fechaRegreso = searchParams.get("fechaRegreso");
+const horaSalida = searchParams.get("horaSalida");
+const horaRegreso = searchParams.get("horaRegreso");
+const categoria = searchParams.get("categoria");
+const costo = searchParams.get("costo");
+const tarjeta = searchParams.get("tarjeta");
+
+// Enmascarar el número de tarjeta (mostrar solo los últimos 4 dígitos)
+const tarjetaEnmascarada = tarjeta
+  ? `**** **** **** ${tarjeta.slice(-4)}`
+  : "No disponible";
+---
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Confirmación de Pago</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<div class="confirmacion-container">
+  <h2>✅ ¡Pago Confirmado!</h2>
+
+  <div class="resumen-pago">
+    <h3>📄 Detalles del Vuelo</h3>
+    <p><strong>🧍 Pasajero:</strong> {nombre} {apellido}</p>
+    <p><strong>🛫 Origen:</strong> {origen}</p>
+    <p><strong>🛬 Destino:</strong> {destino}</p>
+    <p>
+      <strong>📅 Fecha de salida:</strong> {fechaSalida} a las {horaSalida}
+    </p>
+
+    {fechaRegreso && (
+      <p>
+        <strong>📅 Fecha de regreso:</strong> {fechaRegreso} a las {horaRegreso}
+      </p>
+    )}
+
+    <p><strong>💼 Categoría:</strong> {categoria}</p>
+    <p><strong>💰 Costo:</strong> ${costo} USD</p>
+    <p><strong>💳 Tarjeta:</strong> {tarjetaEnmascarada}</p>
+  </div>
+
+  <div class="acciones">
+    <a href="/" class="btn-volver">🏠 Volver al Inicio</a>
+    <a href="/mis-reservas" class="btn-ver-reservas">✈️ Ver Mis Reservas</a>
+  </div>
+</div>
+
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    background: #f9f9f9;
+    color: #333;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+  }
+
+  .confirmacion-container {
+    max-width: 700px;
+    margin: 50px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  h2 {
+    color: #4CAF50;
+    font-size: 2rem;
+  }
+
+  h3 {
+    color: #5A32A3;
+    margin-top: 30px;
+    font-size: 1.5rem;
+  }
+
+  .resumen-pago {
+    text-align: left;
+    margin: 20px 0;
+  }
+
+  .resumen-pago p {
+    background: #F3F3F3;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 8px 0;
+  }
+
+  .acciones {
+    margin-top: 30px;
+  }
+
+  .btn-volver, .btn-ver-reservas {
+    display: inline-block;
+    padding: 12px 20px;
+    margin: 10px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: white;
+    transition: transform 0.2s;
+  }
+
+  .btn-volver {
+    background: #5A32A3;
+  }
+
+  .btn-ver-reservas {
+    background: #4CAF50;
+  }
+
+  .btn-volver:hover, .btn-ver-reservas:hover {
+    transform: scale(1.1);
+  }
+</style>
